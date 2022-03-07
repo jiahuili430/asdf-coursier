@@ -69,7 +69,7 @@ download_release() {
     tar -xf "${filename}" || fail "Could not unzip ${filename}"
   else
     url="${url}.gz"
-    curl "${curl_opts[@]}" -fL "${url}" | gzip -d >"${filename}" || fail "Could not download ${url}"
+    curl "${curl_opts[@]}" "${url}" | gzip -d >"${filename}" || fail "Could not download ${url}"
   fi
 }
 

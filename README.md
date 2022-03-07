@@ -57,4 +57,4 @@ Contributions of any kind welcome! See the [contributing guide](contributing.md)
 
 # License
 
-See [LICENSE](LICENSE) © [jiahuili](https://github.com/jiahuili430/)
+See [LICENSE](LICENSE) © [Jiahui Li](https://github.com/jiahuili430/)
