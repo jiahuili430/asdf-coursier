@@ -2,8 +2,7 @@
 
 set -euo pipefail
 
-# TODO: Ensure this is the correct GitHub homepage where releases can be downloaded for coursier.
-GH_REPO="https://github.com/coursier/coursier/"
+GH_REPO="https://github.com/coursier/coursier"
 TOOL_NAME="coursier"
 TOOL_TEST="coursier --help"
 
@@ -14,26 +13,46 @@ fail() {
 
 curl_opts=(-fsSL)
 
-# NOTE: You might want to remove this if coursier is not hosted on GitHub releases.
 if [ -n "${GITHUB_API_TOKEN:-}" ]; then
   curl_opts=("${curl_opts[@]}" -H "Authorization: token $GITHUB_API_TOKEN")
 fi
 
-sort_versions() {
-  sed 'h; s/[+-]/./g; s/.p\([[:digit:]]\)/.z\1/; s/$/.z/; G; s/\n/ /' |
-    LC_ALL=C sort -t. -k 1,1 -k 2,2n -k 3,3n -k 4,4n -k 5,5n | awk '{print $2}'
-}
-
 list_github_tags() {
   git ls-remote --tags --refs "$GH_REPO" |
     grep -o 'refs/tags/.*' | cut -d/ -f3- |
-    sed 's/^v//' # NOTE: You might want to adapt this sed to remove non-version strings from tags
+    sed 's/^v//'
 }
 
 list_all_versions() {
-  # TODO: Adapt this. By default we simply list the tag names from GitHub releases.
   # Change this function if coursier has other means of determining installable versions.
   list_github_tags
+}
+
+get_arch() {
+  local arch
+  case "$(uname -m)" in
+  x86_64 | amd64) arch="x86_64" ;;
+  aarch64 | arm64) arch="aarch64" ;;
+  *)
+    fail "Arch '$(uname -m)' not supported!"
+    ;;
+  esac
+
+  echo -n $arch
+}
+
+get_platform() {
+  local platform
+  case "$(uname | tr '[:upper:]' '[:lower:]')" in
+  darwin) platform="apple-darwin" ;;
+  linux) platform="pc-linux" ;;
+  windows) platform="pc-win32" ;;
+  *)
+    fail "Platform '$(uname)' not supported!"
+    ;;
+  esac
+
+  echo -n $platform
 }
 
 download_release() {
@@ -41,11 +60,17 @@ download_release() {
   version="$1"
   filename="$2"
 
-  # TODO: Adapt the release URL convention for coursier
-  url="$GH_REPO/archive/v${version}.tar.gz"
+  url="$GH_REPO/releases/download/v${version}/cs-$(get_arch)-$(get_platform)"
 
   echo "* Downloading $TOOL_NAME release $version..."
-  curl "${curl_opts[@]}" -o "$filename" -C - "$url" || fail "Could not download $url"
+  if [ "$(get_platform)" == "pc-win32" ]; then
+    url="${url}.zip"
+    curl -fLo "${filename}" "${url}" || fail "Could not download ${url}"
+    tar -xf "${filename}" || fail "Could not unzip ${filename}"
+  else
+    url="${url}.gz"
+    curl "${curl_opts[@]}" -fL "${url}" | gzip -d >"${filename}" || fail "Could not download ${url}"
+  fi
 }
 
 install_version() {
@@ -58,8 +83,8 @@ install_version() {
   fi
 
   (
-    mkdir -p "$install_path"
-    cp -r "$ASDF_DOWNLOAD_PATH"/* "$install_path"
+    mkdir -p "$install_path/bin"
+    cp -r "$ASDF_DOWNLOAD_PATH/$TOOL_NAME" "$install_path/bin/$TOOL_NAME"
 
     # TODO: Asert coursier executable exists.
     local tool_cmd
@@ -69,6 +94,6 @@ install_version() {
     echo "$TOOL_NAME $version installation was successful!"
   ) || (
     rm -rf "$install_path"
-    fail "An error ocurred while installing $TOOL_NAME $version."
+    fail "An error occurred while installing $TOOL_NAME $version."
   )
 }
