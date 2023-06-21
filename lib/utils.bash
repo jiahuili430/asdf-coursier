@@ -2,32 +2,6 @@
 
 set -euo pipefail
 
-GH_REPO="https://github.com/coursier/coursier"
-TOOL_NAME="coursier"
-TOOL_TEST="coursier --help"
-
-fail() {
-  echo -e "asdf-$TOOL_NAME: $*"
-  exit 1
-}
-
-curl_opts=(-fsSL)
-
-if [ -n "${GITHUB_API_TOKEN:-}" ]; then
-  curl_opts=("${curl_opts[@]}" -H "Authorization: token $GITHUB_API_TOKEN")
-fi
-
-list_github_tags() {
-  git ls-remote --tags --refs "$GH_REPO" |
-    grep -o 'refs/tags/.*' | cut -d/ -f3- |
-    sed 's/^v//'
-}
-
-list_all_versions() {
-  # Change this function if coursier has other means of determining installable versions.
-  list_github_tags
-}
-
 get_arch() {
   local arch
   case "$(uname -m)" in
@@ -55,6 +29,37 @@ get_platform() {
   echo -n $platform
 }
 
+ARCH_PLATFORM="$(get_arch)-$(get_platform)"
+if [[ "$ARCH_PLATFORM" == "aarch64-apple-darwin" ]]; then
+  GH_REPO="https://github.com/VirtusLab/coursier-m1"
+else
+  GH_REPO="https://github.com/coursier/coursier"
+fi
+
+TOOL_NAME="coursier"
+TOOL_TEST="coursier --help"
+
+fail() {
+  echo -e "asdf-$TOOL_NAME: $*"
+  exit 1
+}
+
+curl_opts=(-fsSL)
+
+if [ -n "${GITHUB_API_TOKEN:-}" ]; then
+  curl_opts=("${curl_opts[@]}" -H "Authorization: token $GITHUB_API_TOKEN")
+fi
+
+list_github_tags() {
+  git ls-remote --tags --refs "$GH_REPO" |
+    grep -o 'refs/tags/.*' | cut -d/ -f3- |
+    sed 's/^v//'
+}
+
+list_all_versions() {
+  # Change this function if coursier has other means of determining installable versions.
+  list_github_tags
+}
 download_release() {
   local version filename url
   version="$1"
