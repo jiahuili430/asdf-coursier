@@ -25,11 +25,6 @@ get_platform() {
 	echo -n $platform
 }
 
-case "$(get_arch)-$(get_platform)" in
-aarch64-pc-linux | aarch64-apple-darwin) GH_REPO="https://github.com/VirtusLab/coursier-m1" ;;
-*) GH_REPO="https://github.com/coursier/coursier" ;;
-esac
-
 TOOL_NAME="coursier"
 TOOL_TEST="coursier --help"
 
