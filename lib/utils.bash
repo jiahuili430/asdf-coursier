@@ -45,9 +45,45 @@ if [ -n "${GITHUB_API_TOKEN:-}" ]; then
 fi
 
 list_github_tags() {
-	git ls-remote --tags --refs "$GH_REPO" |
-		grep -o 'refs/tags/.*' | cut -d/ -f3- |
-		sed 's/^v//'
+	list_all_github_tags_coursier_m1() {
+		git ls-remote --tags --refs "https://github.com/VirtusLab/coursier-m1"
+	}
+
+	list_all_github_tags_coursier() {
+		git ls-remote --tags --refs "https://github.com/coursier/coursier"
+	}
+
+	list_github_tags_aarch64_1() {
+		SHA_2_1_16="b96b68d692405f2abf1c836d63966d3f26009eb8"
+		list_all_github_tags_coursier_m1 | awk -v sha="$SHA_2_1_16" '
+			$1 == sha {found=1}
+			!found
+		'
+	}
+
+	list_github_tags_aarch64_2() {
+		SHA_2_1_16="2a16e40d1c14095f3d5831beb312ff6818482458"
+		list_all_github_tags_coursier | awk -v sha="$SHA_2_1_16" '
+			$1 == sha {found=1}
+			found
+		'
+	}
+
+	case "$(get_arch)-$(get_platform)" in
+  aarch64-pc-linux | aarch64-apple-darwin)
+  	list_github_tags_aarch64_1 |
+			grep -o 'refs/tags/.*' | cut -d/ -f3- |
+			sed 's/^v//'
+  	list_github_tags_aarch64_2 |
+			grep -o 'refs/tags/.*' | cut -d/ -f3- |
+			sed 's/^v//'
+  	;;
+  *)
+		list_all_github_tags_coursier |
+			grep -o 'refs/tags/.*' | cut -d/ -f3- |
+			sed 's/^v//'
+  	;;
+  esac
 }
 
 sort_versions() {
@@ -61,12 +97,31 @@ list_all_versions() {
 	# Change this function if coursier has other means of determining installable versions.
 	list_github_tags
 }
+
 download_release() {
+	get_repo() {
+		case "$(get_arch)-$(get_platform)" in
+      aarch64-pc-linux | aarch64-apple-darwin)
+      	major=$(echo "$1" | cut -d '.' -f 1)
+      	minor=$(echo "$1" | cut -d '.' -f 2)
+      	patch=$(echo "$1" | cut -d '.' -f 3 | cut -d '-' -f 1)
+      	if [ "$major" -ge 2 ] && [ "$minor" -ge 1 ] && [ "$patch" -ge 16 ]; then
+					echo "https://github.com/coursier/coursier"
+				else
+					echo "https://github.com/VirtusLab/coursier-m1"
+				fi
+				;;
+      *)
+      	echo "https://github.com/coursier/coursier"
+      	;;
+      esac
+	}
+
 	local version filename url
 	version="$1"
 	filename="$2"
 
-	url="$GH_REPO/releases/download/v${version}/cs-$(get_arch)-$(get_platform)"
+	url="$(get_repo "$version")/releases/download/v${version}/cs-$(get_arch)-$(get_platform)"
 
 	echo "* Downloading $TOOL_NAME release $version..."
 	if [ "$(get_platform)" == "pc-win32" ]; then
