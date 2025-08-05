@@ -46,24 +46,24 @@ fi
 
 list_github_tags() {
 	list_all_github_tags_coursier_m1() {
-		git ls-remote --tags --refs "https://github.com/VirtusLab/coursier-m1"
+		git ls-remote --tags --refs --sort=version:refname "https://github.com/VirtusLab/coursier-m1"
 	}
 
-	list_all_github_tags_coursier() {
-		git ls-remote --tags --refs "https://github.com/coursier/coursier"
+	list_all_github_tags_coursier_main() {
+		git ls-remote --tags --refs --sort=version:refname "https://github.com/coursier/coursier"
 	}
 
-	list_github_tags_aarch64_1() {
-		SHA_2_1_16="b96b68d692405f2abf1c836d63966d3f26009eb8"
-		list_all_github_tags_coursier_m1 | awk -v sha="$SHA_2_1_16" '
-			$1 == sha {found=1}
-			!found
-		'
+	list_github_tags_aarch64_m1() {
+		SHA_2_1_25_M1="19ecf34cba47626df35a6fa462753f5ace6aa4c0"
+		list_all_github_tags_coursier_m1 | awk -v sha="$SHA_2_1_25_M1" '
+			{print}
+			$1 == sha {exit}
+    '
 	}
 
-	list_github_tags_aarch64_2() {
-		SHA_2_1_16="2a16e40d1c14095f3d5831beb312ff6818482458"
-		list_all_github_tags_coursier | awk -v sha="$SHA_2_1_16" '
+	list_github_tags_aarch64_main() {
+		SHA_2_1_25_M2="bc7dc91fbb7cc70db69b1c386ba5ee208f45f1c7"
+		list_all_github_tags_coursier_main | awk -v sha="$SHA_2_1_25_M2" '
 			$1 == sha {found=1}
 			found
 		'
@@ -71,15 +71,15 @@ list_github_tags() {
 
 	case "$(get_arch)-$(get_platform)" in
   aarch64-pc-linux | aarch64-apple-darwin)
-  	list_github_tags_aarch64_1 |
+  	list_github_tags_aarch64_m1 |
 			grep -o 'refs/tags/.*' | cut -d/ -f3- |
 			sed 's/^v//'
-  	list_github_tags_aarch64_2 |
+  	list_github_tags_aarch64_main |
 			grep -o 'refs/tags/.*' | cut -d/ -f3- |
 			sed 's/^v//'
   	;;
   *)
-		list_all_github_tags_coursier |
+		list_all_github_tags_coursier_main |
 			grep -o 'refs/tags/.*' | cut -d/ -f3- |
 			sed 's/^v//'
   	;;
@@ -101,20 +101,27 @@ list_all_versions() {
 download_release() {
 	get_repo() {
 		case "$(get_arch)-$(get_platform)" in
-      aarch64-pc-linux | aarch64-apple-darwin)
-      	major=$(echo "$1" | cut -d '.' -f 1)
-      	minor=$(echo "$1" | cut -d '.' -f 2)
-      	patch=$(echo "$1" | cut -d '.' -f 3 | cut -d '-' -f 1)
-      	if [ "$major" -ge 2 ] && [ "$minor" -ge 1 ] && [ "$patch" -ge 16 ]; then
-					echo "https://github.com/coursier/coursier"
-				else
+			aarch64-pc-linux | aarch64-apple-darwin)
+				major=$(echo "$1" | cut -d '.' -f 1)
+				minor=$(echo "$1" | cut -d '.' -f 2)
+				patch=$(echo "$1" | cut -d '.' -f 3 | cut -d '-' -f 1)
+				rc=$(echo "$1" | awk -F 'M' '{if (NF > 1) print $2; else print ""}')
+				if [ "$major" -lt 2 ]; then
 					echo "https://github.com/VirtusLab/coursier-m1"
+				elif [ "$major" -eq 2 ] && [ "$minor" -lt 1 ]; then
+					echo "https://github.com/VirtusLab/coursier-m1"
+				elif [ "$major" -eq 2 ] && [ "$minor" -eq 1 ] && [ "$patch" -lt 25 ]; then
+					echo "https://github.com/VirtusLab/coursier-m1"
+				elif [ "$major" -eq 2 ] && [ "$minor" -eq 1 ] && [ "$patch" -eq 25 ] && [ -n "$rc" ] && [ "$rc" -lt 2 ]; then
+					echo "https://github.com/VirtusLab/coursier-m1"
+				else
+					echo "https://github.com/coursier/coursier"
 				fi
 				;;
-      *)
-      	echo "https://github.com/coursier/coursier"
-      	;;
-      esac
+			*)
+				echo "https://github.com/coursier/coursier"
+				;;
+		esac
 	}
 
 	local version filename url
