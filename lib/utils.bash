@@ -65,20 +65,20 @@ list_github_tags() {
 	}
 
 	case "$(get_arch)-$(get_platform)" in
-  aarch64-pc-linux | aarch64-apple-darwin)
-  	list_github_tags_aarch64_m1 |
+	aarch64-pc-linux | aarch64-apple-darwin)
+		list_github_tags_aarch64_m1 |
 			grep -o 'refs/tags/.*' | cut -d/ -f3- |
 			sed 's/^v//'
-  	list_github_tags_aarch64_main |
+		list_github_tags_aarch64_main |
 			grep -o 'refs/tags/.*' | cut -d/ -f3- |
 			sed 's/^v//'
-  	;;
-  *)
+		;;
+	*)
 		list_all_github_tags_coursier_main |
 			grep -o 'refs/tags/.*' | cut -d/ -f3- |
 			sed 's/^v//'
-  	;;
-  esac
+		;;
+	esac
 }
 
 sort_versions() {
@@ -96,26 +96,26 @@ list_all_versions() {
 download_release() {
 	get_repo() {
 		case "$(get_arch)-$(get_platform)" in
-			aarch64-pc-linux | aarch64-apple-darwin)
-				major=$(echo "$1" | cut -d '.' -f 1)
-				minor=$(echo "$1" | cut -d '.' -f 2)
-				patch=$(echo "$1" | cut -d '.' -f 3 | cut -d '-' -f 1)
-				rc=$(echo "$1" | awk -F 'M' '{if (NF > 1) print $2; else print ""}')
-				if [ "$major" -lt 2 ]; then
-					echo "https://github.com/VirtusLab/coursier-m1"
-				elif [ "$major" -eq 2 ] && [ "$minor" -lt 1 ]; then
-					echo "https://github.com/VirtusLab/coursier-m1"
-				elif [ "$major" -eq 2 ] && [ "$minor" -eq 1 ] && [ "$patch" -lt 25 ]; then
-					echo "https://github.com/VirtusLab/coursier-m1"
-				elif [ "$major" -eq 2 ] && [ "$minor" -eq 1 ] && [ "$patch" -eq 25 ] && [ -n "$rc" ] && [ "$rc" -lt 2 ]; then
-					echo "https://github.com/VirtusLab/coursier-m1"
-				else
-					echo "https://github.com/coursier/coursier"
-				fi
-				;;
-			*)
+		aarch64-pc-linux | aarch64-apple-darwin)
+			major=$(echo "$1" | cut -d '.' -f 1)
+			minor=$(echo "$1" | cut -d '.' -f 2)
+			patch=$(echo "$1" | cut -d '.' -f 3 | cut -d '-' -f 1)
+			rc=$(echo "$1" | awk -F 'M' '{if (NF > 1) print $2; else print ""}')
+			if [ "$major" -lt 2 ]; then
+				echo "https://github.com/VirtusLab/coursier-m1"
+			elif [ "$major" -eq 2 ] && [ "$minor" -lt 1 ]; then
+				echo "https://github.com/VirtusLab/coursier-m1"
+			elif [ "$major" -eq 2 ] && [ "$minor" -eq 1 ] && [ "$patch" -lt 25 ]; then
+				echo "https://github.com/VirtusLab/coursier-m1"
+			elif [ "$major" -eq 2 ] && [ "$minor" -eq 1 ] && [ "$patch" -eq 25 ] && [ -n "$rc" ] && [ "$rc" -lt 2 ]; then
+				echo "https://github.com/VirtusLab/coursier-m1"
+			else
 				echo "https://github.com/coursier/coursier"
-				;;
+			fi
+			;;
+		*)
+			echo "https://github.com/coursier/coursier"
+			;;
 		esac
 	}
 
