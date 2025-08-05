@@ -27,6 +27,7 @@ get_platform() {
 
 TOOL_NAME="coursier"
 TOOL_TEST="coursier --help"
+GH_REPO="https://github.com/coursier/coursier"
 
 fail() {
 	echo -e "asdf-$TOOL_NAME: $*"
@@ -45,7 +46,7 @@ list_github_tags() {
 	}
 
 	list_all_github_tags_coursier_main() {
-		git ls-remote --tags --refs --sort=version:refname "https://github.com/coursier/coursier"
+		git ls-remote --tags --refs --sort=version:refname "$GH_REPO"
 	}
 
 	list_github_tags_aarch64_m1() {
@@ -110,11 +111,11 @@ download_release() {
 			elif [ "$major" -eq 2 ] && [ "$minor" -eq 1 ] && [ "$patch" -eq 25 ] && [ -n "$rc" ] && [ "$rc" -lt 2 ]; then
 				echo "https://github.com/VirtusLab/coursier-m1"
 			else
-				echo "https://github.com/coursier/coursier"
+				echo "$GH_REPO"
 			fi
 			;;
 		*)
-			echo "https://github.com/coursier/coursier"
+			echo "$GH_REPO"
 			;;
 		esac
 	}
