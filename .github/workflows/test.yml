@@ -1,0 +1,44 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  asdf_list_all_in_go:
+    name: asdf_list_all_asdf>=v0.16.0
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: asdf-vm/actions/install@v4
+      - uses: asdf-vm/actions/plugins-add@v4
+      - run: |
+          uname -a
+          asdf version
+          asdf plugin add coursier
+          asdf list all coursier
+
+  asdf_list_all_in_bash:
+    name: asdf_list_all_asdf<v0.16.0
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: asdf-vm/actions/install@v3.0.2
+      - uses: asdf-vm/actions/plugins-add@v3.0.2
+      - run: |
+          uname -a
+          asdf version
+          asdf plugin add coursier
+          asdf list-all coursier
